@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Look Back">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Look Back SSI Demo</title>
+<script>
+  (() => {
+    const q = new URLSearchParams(location.search).get('app');
+    const standalone = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone;
+    const phone = matchMedia('(pointer: coarse) and (max-width: 600px)').matches;
+    if (q === '1' || (q !== '0' && (standalone || phone))) document.documentElement.classList.add('app-mode');
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #07060b;
+    --panel: #0e0c14;
+    --panel-2: #14111c;
+    --line: #262032;
+    --text: #ece6d8;
+    --muted: #8f8676;
+    --gold: #e9cc96;
+    --gold-dim: #a48a55;
+    --accent: #e4193b;
+    --ok: #6fcf97;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.45 Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(360px, 520px); height: 100vh; }
+
+  /* ---- left: controls ---- */
+  .controls { overflow-y: auto; padding: 24px 28px 48px; border-right: 1px solid var(--line); }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .logo { background: var(--accent); color: #fff; font-weight: 700; font-size: 15px; padding: 5px 9px; border-radius: 3px; }
+  h1 { font-size: 17px; margin: 0; font-weight: 600; color: var(--gold); letter-spacing: .02em; }
+  header small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; letter-spacing: 0; }
+
+  section { margin-bottom: 26px; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--gold-dim); margin: 0 0 10px; display: flex; align-items: center; justify-content: space-between; }
+
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .preset {
+    text-align: left; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: var(--radius); padding: 10px 12px; cursor: pointer; font: inherit; transition: border-color .15s, background .15s;
+  }
+  .preset:hover { border-color: #4a3f2a; background: var(--panel-2); }
+  .preset[aria-pressed="true"] { border-color: var(--gold); background: #1a1508; }
+  .preset b { display: block; font-weight: 600; font-size: 13px; }
+  .preset span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .preset .tag { display: inline-block; font-size: 10px; color: var(--gold); border: 1px solid #4a3f2a; border-radius: 99px; padding: 0 6px; margin-left: 6px; vertical-align: 1px; }
+
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button.btn {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  button.btn:hover { border-color: var(--gold-dim); }
+  button.btn.primary { background: #2b2109; border-color: #5a4726; color: var(--gold); }
+  button.btn.icon { padding: 7px 11px; }
+  .stage { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px 4px 3px 12px; }
+  .stage output { font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; min-width: 1.5ch; text-align: center; }
+  .stage label { color: var(--muted); font-size: 12px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 13px; cursor: pointer; }
+  .check input { margin-top: 3px; accent-color: var(--gold); }
+  .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; }
+  summary { cursor: pointer; padding: 11px 14px; font-weight: 500; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--gold-dim); font-size: 16px; }
+  details[open] summary::after { content: "–"; }
+  summary em { font-style: normal; color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 8px; }
+  .fields { padding: 4px 14px 14px; display: grid; gap: 10px; }
+  .field label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .field label i { font-style: normal; font-variant-numeric: tabular-nums; }
+  .field input, .field textarea {
+    width: 100%; background: #08070c; color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 10px; font: inherit; font-size: 13px; resize: vertical;
+  }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--gold-dim); }
+  .field.changed input, .field.changed textarea { border-color: #6a5628; }
+
+  .toast { position: fixed; left: 28px; bottom: 20px; background: #1a1508; border: 1px solid #5a4726; color: var(--gold); padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transform: translateY(6px); transition: .2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+
+  /* ---- right: phone ---- */
+  .stagewrap { display: flex; align-items: center; justify-content: center; padding: 24px; position: relative;
+    background: radial-gradient(70% 55% at 50% 40%, #ffffff 0%, #eceaf2 70%, #e3e0ec 100%); }
+  .phone {
+    height: min(calc(100vh - 48px), 900px); aspect-ratio: 390 / 849; max-width: 100%;
+    background: #0b0a10; border-radius: 46px; padding: 9px; border: 1px solid #c9c4d6;
+    box-shadow: 0 0 0 2px #f6f5fa, 0 24px 60px rgba(40,30,70,.28), 0 4px 14px rgba(40,30,70,.18);
+  }
+  .screen { width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: #05040a; position: relative; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .loading, .err { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 24px; font-size: 13px; }
+  .err { color: #ff8a8a; }
+
+
+  /* ---- circular touch cursor over the phone ---- */
+  @media (hover: hover) and (pointer: fine) {
+    .screen, .screen canvas { cursor: none !important; }
+  }
+  .touch {
+    position: fixed; left: 0; top: 0; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+    pointer-events: none; z-index: 50; opacity: 0;
+    background: rgba(255,255,255,.30); border: 1.5px solid rgba(255,255,255,.85);
+    box-shadow: 0 0 0 1px rgba(20,16,40,.35), 0 2px 10px rgba(0,0,0,.35);
+    backdrop-filter: blur(1px);
+    transition: opacity .15s, width .12s, height .12s, margin .12s, background .12s;
+    will-change: transform;
+  }
+  .touch.on { opacity: 1; }
+  .touch.down { width: 32px; height: 32px; margin: -16px 0 0 -16px; background: rgba(255,255,255,.55); }
+  .touch::after {
+    content: ""; position: absolute; inset: -1.5px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9);
+    opacity: 0; transform: scale(1);
+  }
+  .touch.tap::after { animation: ripple .45s ease-out; }
+  @keyframes ripple { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2.1); } }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .app { grid-template-columns: 1fr; height: auto; }
+    .stagewrap { order: -1; padding: 16px 0; }
+    .phone { height: auto; width: min(92vw, 390px); }
+    .controls { border-right: 0; overflow: visible; padding: 20px 16px 48px; }
+  }
+
+  /* ---- app mode: only the design, edge to edge, like the real app ---- */
+  html.app-mode, html.app-mode body { height: 100%; overflow: hidden; overscroll-behavior: none; background: #000; }
+  html.app-mode .app { display: block; height: 100dvh; }
+  html.app-mode .controls, html.app-mode .toast, html.app-mode .touch { display: none; }
+  html.app-mode .stagewrap { height: 100%; padding: 0; background: #000; }
+  html.app-mode .phone { width: 100%; height: 100%; aspect-ratio: auto; max-width: none; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: #000; }
+  html.app-mode .screen {
+    border-radius: 0; background: #000;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  html.app-mode canvas { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="controls">
+    <header>
+      <span class="logo">SSI</span>
+      <h1>Look Back<small>Trang demo &amp; bộ dữ liệu test</small></h1>
+    </header>
+
+    <section>
+      <h2>Bộ dữ liệu test</h2>
+      <div class="presets" id="presets"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="saveSet">Lưu bộ hiện tại…</button>
+        <button class="btn" id="exportSet">Xuất JSON</button>
+        <button class="btn" id="importSet">Nhập JSON</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+    </section>
+
+    <section>
+      <h2>Điều khiển luồng</h2>
+      <div class="row">
+        <div class="stage">
+          <label>Stage (lá bài)</label>
+          <button class="btn icon" id="stageDown" aria-label="Giảm stage">−</button>
+          <output id="stageVal">0</output>
+          <button class="btn icon" id="stageUp" aria-label="Tăng stage">+</button>
+        </div>
+        <button class="btn primary" id="next">Next</button>
+        <button class="btn primary" id="next2">Next 2</button>
+        <button class="btn" id="replay">Phát lại từ đầu</button>
+      </div>
+      <label class="check"><input type="checkbox" id="autoCard" checked> Tap ở màn chọn lá bài (bước cuối, <code>scene 2</code>) → tự random <code>stage</code> = 1 hoặc 2</label>
+      <label class="check" style="align-items:center">Chờ trước khi mở thẻ <input type="number" id="cardDelay" value="2" min="0" max="10" step="0.5" style="width:64px;margin:0 2px;background:#08070c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:3px 6px;font:inherit"> giây (tạo cảm giác hồi hộp)</label>
+      <div class="hint" id="cardInfo">Bước của <code>Main</code>: <b id="stateName">—</b> · Lá bài vừa random: <b id="lastCard">—</b></div>
+      <p class="hint">Bấm trực tiếp lên màn hình điện thoại để thao tác như người dùng thật. <code>Stage</code> quyết định lá bài được mở (1 = thẻ 1, 2 = thẻ 2); <code>Next</code>, <code>Next 2</code> gọi trigger cùng tên của <code>MainVM</code>.</p>
+    </section>
+
+    <section>
+      <h2>Chi tiết dữ liệu <button class="btn" id="resetAll">Về mặc định</button></h2>
+      <div id="groups"></div>
+    </section>
+  </div>
+
+  <div class="stagewrap">
+    <div class="phone">
+      <div class="screen">
+        <canvas id="canvas"></canvas>
+        <div class="loading" id="loading">Đang tải…</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="touch" id="touch" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@rive-app/canvas@2.43.1/rive.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---- schema: which MainVM properties to edit, grouped by screen ----
+  const LABEL = {
+    Headline: 'Tiêu đề', Subtitle: 'Phụ đề', Caption: 'Chú thích', Caption1: 'Chú thích 1', Caption2: 'Chú thích 2',
+    StatValue: 'Số liệu', StatValue1: 'Số liệu 1', StatValue2: 'Số liệu 2', StatUnit: 'Đơn vị',
+    StatUnit1: 'Đơn vị 1', StatUnit2: 'Đơn vị 2', Description: 'Mô tả', Quote: 'Trích dẫn',
+    DescPrefix: 'Mô tả (trước lãi suất)', InterestRate: 'Lãi suất (%)', DescSuffix: 'Mô tả (sau lãi suất)',
+  };
+  const GROUPS = [
+    { id: 'giaoDich', title: '1 · Giao dịch', keys: ['Headline','Subtitle','Caption1','StatValue1','StatUnit1','Caption2','StatValue2','StatUnit2','Quote'] },
+    { id: 'soLuongCoPhieu', title: '2 · Số lượng cổ phiếu', keys: ['Headline','Subtitle','Caption','StatValue','StatUnit','Description'] },
+    { id: 'maNamGiu', title: '3 · Mã nắm giữ', keys: ['Headline','Subtitle','Caption','StatValue','StatUnit','Description'] },
+    { id: 'margin', title: '4 · Margin', keys: ['Headline','Subtitle','Caption','StatValue','StatUnit','Description'] },
+    { id: 'scash', title: '5 · S-Cash', keys: ['Headline','Subtitle','Caption','StatValue','StatUnit','DescPrefix','InterestRate','DescSuffix'] },
+    { id: 'ccq', title: '6 · Chứng chỉ quỹ', keys: ['Headline','Subtitle','Caption','StatValue','StatUnit','Description'] },
+  ];
+  const FIELDS = [];               // {name, label, group, type}
+  const TYPE_OVERRIDE = { maNamGiuStatValue: 'string' };
+  GROUPS.forEach(g => g.keys.forEach(k => {
+    const name = g.id + k;
+    const isNum = /StatValue|InterestRate/.test(k) && !TYPE_OVERRIDE[name];
+    FIELDS.push({ name, label: LABEL[k], group: g.id, type: isNum ? 'number' : 'string', long: /Subtitle|Description|Quote/.test(k) });
+  }));
+
+  // ---- built-in test datasets (applied on top of the values read from the .riv) ----
+  const DATASETS = [
+    { id: 'default', name: 'Mặc định', desc: 'Giá trị gốc trong file thiết kế', tag: 'gốc', values: {} },
+    { id: 'retail', name: 'Nhà đầu tư phổ thông', desc: 'Số liệu nhỏ, gần với khách hàng đại trà', values: {
+        giaoDichStatValue1: 87, giaoDichStatValue2: 0.85, soLuongCoPhieuStatValue: 8, maNamGiuStatValue: 'VNM',
+        marginStatValue: 40, scashStatValue: 5, scashInterestRate: 5.8, ccqStatValue: 20 } },
+    { id: 'vip', name: 'Khách VIP', desc: 'Giá trị lớn, nhiều giao dịch', values: {
+        giaoDichStatValue1: 25400, giaoDichStatValue2: 1250.5, soLuongCoPhieuStatValue: 120, maNamGiuStatValue: 'FPT',
+        marginStatValue: 100, scashStatValue: 2500, scashInterestRate: 6.5, ccqStatValue: 5000 } },
+    { id: 'new', name: 'Khách mới (toàn số 0)', desc: 'Kiểm tra trạng thái chưa có dữ liệu', values: {
+        giaoDichStatValue1: 0, giaoDichStatValue2: 0, soLuongCoPhieuStatValue: 0, maNamGiuStatValue: '--',
+        marginStatValue: 0, scashStatValue: 0, scashInterestRate: 0, ccqStatValue: 0 } },
+    { id: 'huge', name: 'Số cực lớn', desc: 'Kiểm tra số tràn khung, chữ bị cắt', values: {
+        giaoDichStatValue1: 9999999, giaoDichStatValue2: 99999.9, soLuongCoPhieuStatValue: 99999, maNamGiuStatValue: 'ABCDEFGH',
+        marginStatValue: 999, scashStatValue: 9999999, scashInterestRate: 99.99, ccqStatValue: 9999999 } },
+    { id: 'decimal', name: 'Số thập phân', desc: 'Làm tròn 0 và 1 chữ số thập phân', values: {
+        giaoDichStatValue1: 1249.6, giaoDichStatValue2: 12.3456, soLuongCoPhieuStatValue: 49.5, marginStatValue: 74.5,
+        scashStatValue: 9.99, scashInterestRate: 6.55, ccqStatValue: 100.4 } },
+    { id: 'long', name: 'Văn bản rất dài', desc: 'Kiểm tra xuống dòng và tràn text', values: (() => {
+        const L = 'Đây là một đoạn văn bản rất dài dùng để kiểm tra khả năng xuống dòng, tràn khung và cắt chữ của thiết kế trên màn hình điện thoại nhỏ. ';
+        const o = {};
+        FIELDS.filter(f => f.type === 'string' && !/StatUnit|StatValue/.test(f.name)).forEach(f => {
+          o[f.name] = /Headline/.test(f.name) ? 'Tiêu đề cực kỳ dài để thử xem nó có xuống dòng hay bị tràn ra ngoài khung' : L + L;
+        });
+        return o; })() },
+    { id: 'empty', name: 'Chuỗi rỗng', desc: 'Mọi văn bản để trống', values: (() => {
+        const o = {}; FIELDS.filter(f => f.type === 'string').forEach(f => o[f.name] = ''); return o; })() },
+    { id: 'special', name: 'Ký tự đặc biệt', desc: 'Dấu tiếng Việt chồng, ký tự HTML, dấu ngoặc', values: {
+        giaoDichHeadline: 'ỰỬỮ ẶẲẴ ỆỂỄ ỘỔỖ', giaoDichSubtitle: '<b>Giao dịch</b> & "trích dẫn" — “ngoặc cong” \'đơn\' 100%',
+        giaoDichQuote: '“Thị trường… <scr' + 'ipt>alert(1)</scr' + 'ipt>”', maNamGiuStatValue: 'VN30F1M', scashDescPrefix: 'Lãi suất tối đa ~ ',
+        scashDescSuffix: ' %/năm (*)', ccqStatUnit: ' tr.đ', marginStatUnit: '%' } },
+  ];
+
+  // ---- state ----
+  const $ = (s, r = document) => r.querySelector(s);
+  let riveInst = null, vmi = null;
+  let defaults = {};                 // read from the .riv on first load
+  let current = {};                  // what the form currently holds
+  let activeId = 'default';
+  let customSets = [];
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+                  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 1800); }
+
+  // ---- write one property into the running file ----
+  function push(name, value) {
+    if (!vmi) return;
+    const f = FIELDS.find(x => x.name === name); if (!f) return;
+    try {
+      if (f.type === 'number') { const p = vmi.number(name); if (p) p.value = Number(value) || 0; }
+      else { const p = vmi.string(name); if (p) p.value = String(value); }
+    } catch (e) { console.warn('push failed', name, e); }
+  }
+  const pushAll = () => Object.keys(current).forEach(k => push(k, current[k]));
+
+  // ---- UI: presets ----
+  function renderPresets() {
+    const el = $('#presets'); el.innerHTML = '';
+    [...DATASETS, ...customSets.map(s => ({ ...s, custom: true }))].forEach(d => {
+      const b = document.createElement('button');
+      b.className = 'preset'; b.setAttribute('aria-pressed', String(d.id === activeId));
+      const tag = d.custom ? '<span class="tag" style="display:inline">của bạn</span>' : (d.tag ? `<span class="tag" style="display:inline">${d.tag}</span>` : '');
+      b.innerHTML = `<b></b><span></span>`;
+      b.firstChild.innerHTML = ''; b.firstChild.textContent = d.name; b.firstChild.insertAdjacentHTML('beforeend', tag);
+      b.lastChild.textContent = d.desc || '';
+      b.onclick = () => applyDataset(d);
+      if (d.custom) b.oncontextmenu = e => { e.preventDefault(); if (confirm(`Xoá bộ “${d.name}”?`)) { customSets = customSets.filter(x => x.id !== d.id); store.set('ssi.custom', customSets); renderPresets(); } };
+      el.appendChild(b);
+    });
+  }
+
+  function applyDataset(d) {
+    activeId = d.id;
+    current = { ...defaults, ...(d.values || {}) };
+    syncForm(); pushAll(); renderPresets();
+    toast(`Đã áp dụng: ${d.name}`);
+  }
+
+  // ---- UI: form ----
+  function renderForm() {
+    const root = $('#groups'); root.innerHTML = '';
+    GROUPS.forEach((g, gi) => {
+      const det = document.createElement('details'); if (gi === 0) det.open = true;
+      det.innerHTML = `<summary><span>${g.title}</span></summary><div class="fields"></div>`;
+      const box = $('.fields', det);
+      FIELDS.filter(f => f.group === g.id).forEach(f => {
+        const wrap = document.createElement('div'); wrap.className = 'field'; wrap.dataset.name = f.name;
+        const id = 'f_' + f.name;
+        wrap.innerHTML = `<label for="${id}"><span>${f.label}</span><i></i></label>` +
+          (f.long ? `<textarea id="${id}" rows="2"></textarea>` : `<input id="${id}" type="${f.type === 'number' ? 'number' : 'text'}" ${f.type === 'number' ? 'step="any"' : ''}>`);
+        const inp = $('input, textarea', wrap);
+        inp.addEventListener('input', () => {
+          current[f.name] = f.type === 'number' ? (inp.value === '' ? 0 : Number(inp.value)) : inp.value;
+          activeId = null; renderPresets(); mark(wrap, f); push(f.name, current[f.name]);
+        });
+        box.appendChild(wrap);
+      });
+      root.appendChild(det);
+    });
+  }
+  function mark(wrap, f) {
+    const changed = String(current[f.name]) !== String(defaults[f.name]);
+    wrap.classList.toggle('changed', changed);
+    const len = f.type === 'string' ? String(current[f.name] ?? '').length : '';
+    $('i', wrap).textContent = len === '' ? '' : len + ' ký tự';
+  }
+  function syncForm() {
+    FIELDS.forEach(f => {
+      const wrap = $(`.field[data-name="${f.name}"]`); if (!wrap) return;
+      const inp = $('input, textarea', wrap);
+      const v = current[f.name]; inp.value = v === undefined ? '' : v;
+      mark(wrap, f);
+    });
+  }
+
+  // ---- Rive ----
+  const ARTBOARD = new URLSearchParams(location.search).get('artboard') || 'Main';
+  const canvas = $('#canvas');
+  function fitCanvas() {
+    const r = canvas.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
+    if (riveInst) riveInst.resizeDrawingSurfaceToCanvas();
+  }
+  function boot() {
+    clearTimeout(cardTimer); cardTimer = null;
+    if (riveInst) { try { riveInst.cleanup(); } catch {} riveInst = null; vmi = null; }
+    $('#loading').style.display = 'grid'; $('#loading').textContent = 'Đang tải…';
+    fitCanvas();
+    riveInst = new rive.Rive({
+      src: 'ssi_project.riv', canvas, artboard: ARTBOARD, stateMachines: 'State Machine 1', autoplay: true, autoBind: true,
+      layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
+      onLoad() {
+        fitCanvas();
+        vmi = riveInst.viewModelInstance;
+        if (!vmi) { showError('File .riv không có ViewModel “MainVM” được gắn vào artboard.'); return; }
+        if (!Object.keys(defaults).length) {           // first load: read defaults straight from the file
+          FIELDS.forEach(f => { try { defaults[f.name] = f.type === 'number' ? vmi.number(f.name).value : vmi.string(f.name).value; } catch {} });
+          current = { ...defaults }; renderForm(); syncForm(); renderPresets();
+        } else pushAll();
+        watchStage();
+        trackStates();
+        $('#loading').style.display = 'none';
+      },
+      onLoadError(e) { showError('Không tải được file thiết kế. Hãy mở trang qua http (không mở trực tiếp file://).'); console.error(e); },
+    });
+  }
+  function showError(m) { const l = $('#loading'); l.className = 'err'; l.style.display = 'grid'; l.textContent = m; }
+
+  // ---- flow controls ----
+  function watchStage() {
+    const out = $('#stageVal');
+    const read = () => { try { out.textContent = vmi.number('stage').value; } catch {} };
+    read(); clearInterval(watchStage.t); watchStage.t = setInterval(read, 250);
+  }
+  function stageBy(d) { try { const p = vmi.number('stage'); p.value = Math.max(0, p.value + d); } catch {} }
+  const fire = n => { try { vmi.trigger(n).trigger(); } catch (e) { console.warn(e); } };
+  $('#stageUp').onclick = () => stageBy(1);
+  $('#stageDown').onclick = () => stageBy(-1);
+  $('#next').onclick = () => fire('next');
+  $('#next2').onclick = () => fire('next2');
+  $('#replay').onclick = boot;
+  $('#resetAll').onclick = () => applyDataset(DATASETS[0]);
+
+
+  // ---- lá bài: random stage = 1 | 2 when the user taps at the card-choosing step ----
+  let currentStates = [];
+  function trackStates() {
+    currentStates = [];
+    try {
+      riveInst.on(rive.EventType.StateChange, ev => {
+        currentStates = (ev.data || []).map(String);
+        $('#stateName').textContent = currentStates.join(', ') || '—';
+      });
+    } catch (e) { console.warn('StateChange not available', e); }
+  }
+  // Main's last step is the nested "scene 2" (open → choose card → loading → card 1|2); stage is only read there
+  const inChooseCard = () => currentStates.some(n => /^scene\s*2$|chon\s*the/i.test(n.trim()));
+  let cardTimer = null;
+  function randomCard() {
+    if (!vmi || !$('#autoCard').checked || !inChooseCard() || cardTimer) return;   // ignore taps while waiting
+    const card = Math.random() < 0.5 ? 1 : 2;
+    const delay = Math.max(0, Number($('#cardDelay').value) || 0) * 1000;
+    try { vmi.number('stage').value = 0; } catch { return; }      // hold on the loading state until the delay is over
+    $('#stageVal').textContent = 0; $('#lastCard').textContent = delay ? `${card} (mở sau ${delay / 1000}s…)` : card;
+    const inst = vmi;
+    cardTimer = setTimeout(() => {
+      cardTimer = null;
+      if (inst !== vmi) return;                                     // page was replayed meanwhile
+      try { vmi.number('stage').value = card; } catch { return; }
+      $('#stageVal').textContent = card; $('#lastCard').textContent = card;
+    }, delay);
+  }
+  // capture phase: runs before Rive reads the tap, so stage is set when "the loading" checks it
+  $('.screen').addEventListener('pointerdown', randomCard, true);
+
+  // ---- save / export / import ----
+  $('#saveSet').onclick = () => {
+    const name = prompt('Tên bộ dữ liệu:'); if (!name) return;
+    const values = {}; FIELDS.forEach(f => { if (String(current[f.name]) !== String(defaults[f.name])) values[f.name] = current[f.name]; });
+    const s = { id: 'c' + Date.now(), name, desc: 'Bộ dữ liệu do bạn tạo (chuột phải để xoá)', values };
+    customSets.push(s); store.set('ssi.custom', customSets); activeId = s.id; renderPresets(); toast('Đã lưu');
+  };
+  $('#exportSet').onclick = () => {
+    const blob = new Blob([JSON.stringify(current, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lookback-data.json'; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('#importSet').onclick = () => $('#importFile').click();
+  $('#importFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const j = JSON.parse(await f.text()); const values = {};
+      FIELDS.forEach(x => { if (x.name in j) values[x.name] = j[x.name]; });
+      applyDataset({ id: null, name: 'File đã nhập', values });
+    } catch { toast('File JSON không hợp lệ'); }
+    e.target.value = '';
+  };
+
+
+  // ---- circular cursor while the pointer is over the phone screen ----
+  (() => {
+    const dot = $('#touch'), scr = $('.screen');
+    if (!dot || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const move = e => { dot.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`; };
+    scr.addEventListener('pointerenter', e => { move(e); dot.classList.add('on'); });
+    scr.addEventListener('pointermove', move);
+    scr.addEventListener('pointerleave', () => dot.classList.remove('on', 'down'));
+    scr.addEventListener('pointerdown', () => { dot.classList.add('down'); dot.classList.remove('tap'); void dot.offsetWidth; dot.classList.add('tap'); });
+    window.addEventListener('pointerup', () => dot.classList.remove('down'));
+  })();
+
+  // ---- app mode: hide browser chrome on the first tap where the Fullscreen API exists (not iPhone Safari) ----
+  if (document.documentElement.classList.contains('app-mode')) {
+    const el = document.documentElement;
+    const goFull = () => {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req && !document.fullscreenElement && !document.webkitFullscreenElement) {
+        try { const p = req.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch {}
+      }
+    };
+    window.addEventListener('pointerdown', goFull, { capture: true, passive: true });
+  }
+
+  // ---- go ----
+  customSets = store.get('ssi.custom') || [];
+  window.addEventListener('resize', fitCanvas);
+  boot();
+})();
+</script>
+</body>
+</html>
